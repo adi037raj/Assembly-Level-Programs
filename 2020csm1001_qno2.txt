@@ -1,0 +1,304 @@
+#NAME - AADITYA RAJ BARNWAL
+#ROLL  - 2020 CSM 1001
+
+
+.data
+mach_code:.word 0x2D0040EF #machine code
+inst_store_at:.word 0x10001000
+store_at:     .word 0x10001004
+.text
+lw t0,inst_store_at
+lw t1,mach_code
+sw t1,0(t0)
+addi t0,x0,127
+and t2,t0,t1 # contains only opcode
+
+addi t0,x0,51 # opcode ADD,sub,,xor
+beq t2,t0,Rtype
+
+
+addi t0,x0,19#opcode of slli
+beq t0,t2,shift_op
+
+addi t0,x0,3 #opcde of lw
+beq t0,t2,loadword
+
+addi t0,x0,35	 #opcde of sw
+beq t0,t2,storeword
+
+addi t0,x0,99 #opcde of beq
+beq t0,t2,branchequal
+
+addi t0,x0,111 #opcde of jal
+beq t0,t2,jump_ins
+
+#default case
+beq x0,x0,finalexit
+
+Rtype:
+#opcode is in t2
+
+lw t0,store_at #the address where we store the opcode and everything
+lw t1,mach_code
+srli t1,t1,25 #for func 7
+
+
+lw t3,mach_code
+slli t3,t3,17# for func 3
+srli t3,t3,29
+#now we have to check the fun7 and fun3 is valid or not
+
+bne t1,x0,checkfun7 #it means that t1 is valid if 32 else break
+rightfun7:
+bne t3,x0,checkfun3
+rightfun3:
+sw t2,0(t0) #storeing opcode
+addi t0,t0,4
+sw t1,0(t0) #storing func7
+addi t0,t0,4
+sw t3,0(t0) #storing func3
+
+lw t1,mach_code 
+slli t1,t1,12 #for rs1
+srli t1,t1,27 
+addi t0,t0,4
+sw t1,0(t0) #storing rs1
+lw t1,mach_code 
+slli t1,t1,7 #for rs2
+srli t1,t1,27 
+addi t0,t0,4
+sw t1,0(t0) #storing rs2
+lw t1,mach_code 
+slli t1,t1,20 #for rd
+srli t1,t1,27 
+addi t0,t0,4
+sw t1,0(t0) #storing rd
+
+beq x0,x0,finalexit
+
+
+
+checkfun7:
+addi t4,x0,32
+beq t4,t1,rightfun7
+beq x0,x0,finalexit
+
+
+
+checkfun3:
+addi t4,x0,4
+beq t4,t3,rightfun3
+beq x0,x0,finalexit
+
+
+shift_op:#slli
+
+
+lw t0,store_at
+lw t1,mach_code
+srli t1,t1,26 #func 6
+bne t1,x0,finalexit # slli func6 is 0
+
+lw t3,mach_code
+slli t3,t3,17
+srli t3,t3,29 #func 3
+addi t4,x0,1
+bne t3,t4,finalexit
+sw t2,0(t0)
+addi t0,t0,4
+sw t1,0(t0)
+addi t0,t0,4
+sw t3,0(t0)
+addi t0,t0,4
+
+lw t1,mach_code
+slli t1,t1,12
+srli t1,t1,27 # for rs1
+sw t1,0(t0)
+addi t0,t0,4
+
+lw t1,mach_code
+slli t1,t1,20
+srli t1,t1,27 # for rd
+sw t1,0(t0)
+addi t0,t0,4
+
+lw t1,mach_code
+slli t1,t1,6
+
+srli t1,t1,26 # for immideiate 
+
+sw t1,0(t0)
+beq x0,x0,finalexit
+
+
+
+
+loadword:#for lw instruction
+
+#opcode is in t2
+lw t0,store_at #the address where we store the opcode and everything
+
+lw t1,mach_code
+slli t1,t1,17 #for func 3
+srli t1,t1,29
+addi t4,x0,2
+bne t4,t1,finalexit
+sw t2,0(t0)
+addi t0,t0,4
+sw t1,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+slli t1,t1,12 #for rs1
+srli t1,t1,27
+sw t1,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+slli t1,t1,20 #for rd
+srli t1,t1,27
+sw t1,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+ #for immediate
+srli t1,t1,20
+sw t1,0(t0)
+
+
+beq x0,x0,finalexit
+
+storeword:
+#opcode is in t2
+lw t0,store_at #the address where we store the opcode and everything
+
+lw t1,mach_code
+slli t1,t1,17 #for func 3
+srli t1,t1,29
+addi t4,x0,3
+beq t4,t1,finalexit #check for fun3
+sw t2,0(t0)
+addi t0,t0,4
+sw t1,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+slli t1,t1,12 #for rs1
+srli t1,t1,27
+sw t1,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+slli t1,t1,7 #for rs2
+srli t1,t1,27
+sw t1,0(t0)
+
+#for immediate
+addi t0,t0,4
+lw t1,mach_code
+srli t1,t1,25 #last 7 bits are there in t1
+slli t1,t1,5 #shift it to 5 digits
+lw t2,mach_code
+slli t2,t2,20
+srli t2,t2,27 #first five bits are there
+add t1,t2,t1
+sw t1,0(t0)
+
+
+
+
+beq x0,x0,finalexit
+
+branchequal:
+
+#opcode is in t2
+lw t0,store_at #the address where we store the opcode and everything
+
+lw t1,mach_code
+slli t1,t1,17 #for func 3
+srli t1,t1,29
+bne t1,x0,finalexit
+sw t2,0(t0)
+
+addi t0,t0,4
+sw t1,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+slli t1,t1,12 #for rs1
+srli t1,t1,27
+sw t1,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+slli t1,t1,7 #for rs2
+srli t1,t1,27
+sw t1,0(t0)
+
+#for immediate
+addi t0,t0,4
+lw t1,mach_code
+srli t1,t1,31
+slli t1,t1,11
+lw t2,mach_code
+srli t2,t2,24
+slli t2,t2,31
+slli t2,t2,10
+add t1,t1,t2
+lw t2,mach_code
+slli t2,t2,1
+srli t2,t2,26
+slli t2,t2,5
+add t1,t1,t2
+lw t2,mach_code
+slli t2,t2,20
+srli t2,t2,8
+add t1,t1,t2
+add t1,t1,t1  # imm*2 as 0th index is not used
+sw t1,0(t0)
+
+
+
+beq x0,x0,finalexit
+jump_ins:
+
+#opcode is in t2
+lw t0,store_at #the address where we store the opcode and everything
+sw t2,0(t0)
+
+addi t0,t0,4
+lw t1,mach_code
+slli t1,t1,20 #for rd
+srli t1,t1,27
+sw t1,0(t0)
+#for immideiate
+addi t0,t0,4
+lw t1,mach_code
+srli t1,t1,31
+slli t1,t1,19
+lw t2,mach_code
+slli t2,t2,11
+srli t2,t2,31
+slli t2,t2,10
+add t1,t1,t2
+lw t2,mach_code
+slli t2,t2,1
+srli t2,t2,22
+add t1,t1,t2
+lw t2,mach_code
+slli t2,t2,12
+srli t2,t2,24
+slli t2,t2,11
+add t1,t2,t1
+add t1,t1,t1
+sw t1,0(t0)
+
+
+
+beq x0,x0,finalexit
+
+
+finalexit:
+
+

@@ -1,0 +1,66 @@
+# NAME  - AADITYA RAJ BARNWAL
+#ROLL  -  2020 CSM 1001
+
+
+#i am using recursive approach to solve problem you can easily change the seed value and m and n 
+.data
+first_seed:.word 5
+second_seed:.word 8
+m:.word 5
+n:.word 3
+store_at: .word 0x10002500
+.text
+lw x10,m
+jal x1,fib
+beq x0,x0,mexit
+fib:
+beq x0,x10,basecondition
+addi sp,sp,-4
+sw x1,0(sp)
+addi x10,x10,-1
+jal x1,fib
+
+add t2,t1,t0
+add t0,t1,x0
+add t1,t2,x0
+lw x1,0(sp)
+addi sp,sp,4
+jalr x0,x1,0
+
+
+
+basecondition:
+
+lw t0,first_seed
+lw t1,second_seed
+jalr x0,x1,0
+
+mexit:
+lw x10,n
+lw t3,store_at
+jal x1,fib2
+beq x0,x0,nexit
+fib2:
+beq x0,x10,basecondition2
+addi sp,sp,-4
+sw x1,0(sp)
+addi x10,x10,-1
+jal x1,fib2
+
+add t2,t1,t0
+add t0,t1,x0
+add t1,t2,x0
+sw t1,0(t3)
+addi t3,t3,4
+lw x1,0(sp)
+addi sp,sp,4
+jalr x0,x1,0
+
+
+
+
+basecondition2:
+jalr x0,x1,0
+
+
+nexit:
